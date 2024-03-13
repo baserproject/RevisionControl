@@ -1,8 +1,8 @@
 <?php
 $config = array(
 	'RevisionControl' => array(
-		'limit' 	=> 0,	// 世代制限 0:無し | 数値
-		'displayLimit' => 20,
+		'limit' 	=> 50,	// 世代制限 0:無し | 数値
+		'displayLimit' => 20,	// 表示件数
 		'models'	=> array(
 			'Page' => array('Page', 'PageCategory'),
 			'BlogPost' => array('BlogPost', 'BlogTag'),

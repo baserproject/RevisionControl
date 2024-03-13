@@ -1,6 +1,6 @@
 <?php
 /**
- * @var array $revList 
+ * @var array $revList
  */
 ?>
 <div class="RevisionControlList">
@@ -22,8 +22,12 @@
             ?>
             <li class="bca-update-log__list-item">
                 <a href="<?php echo Router::url($urlParams ); ?>" onclick="return confirm('過去のリビジョン情報で編集を開きますか？')">
+                    <?php echo h($data['RevisionControl']['revision']); ?>:
                     <?php echo date("Y.m.d H:i:s", strtotime($data['RevisionControl']['created'])) ?>
-                    (<?php echo $data['RevisionControl']['revision']; ?>)
+					 :
+					[<?php echo h($data['User']['id']); ?>]
+                    <?php echo h($data['User']['real_name_1']); ?>
+                    <?php if ($data['User']['real_name_2']) echo h($data['User']['real_name_2']); ?>
                 </a>
             </li>
         <?php endforeach; ?>
