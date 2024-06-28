@@ -1,23 +1,27 @@
 <?php
-$config = array(
-	'RevisionControl' => array(
+/**
+ * [RevisionControl]
+ *
+ */
+return [
+	'RevisionControl' => [
 		'limit' 	=> 50,	// 世代制限 0:無し | 数値
 		'displayLimit' => 20,	// 表示件数
-		'models'	=> array(
-			'Page' => array('Page', 'PageCategory'),
-			'BlogPost' => array('BlogPost', 'BlogTag'),
-		),
-		'actsAs'	=> array(
-			'BcUpload' => array(
-				'BlogPost' => array(
+		'models'	=> [
+			'BcBlog.BlogPosts' => ['BlogPosts', 'BlogTag'],
+			'BaserCore.Pages' => ['Pages'],
+		],
+		'actsAs'	=> [
+			'BcUpload' => [
+				'BlogPosts' => [
 					'eye_catch'
-				)
-			)
-		),
-		'views' => array(
-			'BlogPost' => array('controller'=> 'blog_posts', 'action' => 'admin_edit'),
-			'Page' => array('controller'=> 'pages', 'action' => 'admin_edit')
-		),
+				]
+			]
+		],
+		'views' => [
+			'BcBlog.BlogPosts' => ['controller'=> 'BlogPosts', 'action' => 'edit', 'data' => 'post'],
+			'BaserCore.Pages' => ['controller'=> 'Pages', 'action' => 'edit', 'data' => 'page']
+		],
 		'filesDir' => '_rvc',
 
 		// 除外フォーム
@@ -25,5 +29,5 @@ $config = array(
 			'FavoriteAjaxForm',
 			'PermissionAjaxAddForm',
 		]
-	),
-);
+	],
+];
