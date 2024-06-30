@@ -29,6 +29,7 @@ public $events = ['beforeRender'];
 		$view = $event->getSubject();
 		$request = $view->getRequest(); // requestの取得
 		/* controller・actionなどはparamsに含まれるが、オブジェクトを取得できないため、getAttribute()を使う */
+		if (Configure::read('RevisionControl.views') == false) return;
 
 			foreach(Configure::read('RevisionControl.views') as $modelName => $requestTarget) {
 				if ($requestTarget['controller'] == $request->getParam('controller') && $requestTarget['action'] == $request->getParam('action')) {
