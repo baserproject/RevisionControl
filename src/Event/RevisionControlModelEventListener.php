@@ -65,7 +65,7 @@ class RevisionControlModelEventListener extends BcModelEventListener {
 			// $query->enableHydration(false);
 			$prevData = $query->first();
 			// BlogPostsはsaveが２回走るため、1秒以内のレコードは保存しない
-			if  (strval($prevData->get('modified')) == strval($entity->get('modified'))) {
+			if  (!empty($prevData) && strval($prevData->get('modified')) == strval($entity->get('modified'))) {
 				// \Cake\Log\Log::write('error', $entity->get('modified'));
 				// \Cake\Log\Log::write('error', $prevData->get('modified'));
 				// \Cake\Log\Log::write('error', strval($prevData->get('modified')) == strval($entity->get('modified')));
@@ -127,16 +127,16 @@ class RevisionControlModelEventListener extends BcModelEventListener {
 								// thumbファイル ( __mobile_thumb /  __thumb )
 								$orgFilePathThumb1 = preg_replace("/\.([^.]+)$/", "__mobile_thumb.$1", $orgFilePath);
 								if (file_exists($orgFilePathThumb1)) {
-									$bkFilePathThumb1 = 'files' . DS . 'blog' . DS . $contentId . DS . 'blog_posts' . DS . 
-										$bkDir . DS . $saveEntity->id . DS . 
+									$bkFilePathThumb1 = 'files' . DS . 'blog' . DS . $contentId . DS . 'blog_posts' . DS .
+										$bkDir . DS . $saveEntity->id . DS .
 										preg_replace("/\.([^.]+)$/", "__mobile_thumb.$1",$entity->get($field));
 									$file = new \Cake\Filesystem\File(WWW_ROOT  . $orgFilePathThumb1);
 									$file->copy(WWW_ROOT . $bkFilePathThumb1, true, 0777);
 								}
 								$orgFilePathThumb2 = preg_replace("/\.([^.]+)$/", "__thumb.$1", $orgFilePath);
 								if (file_exists($orgFilePathThumb2)) {
-									$bkFilePathThumb2 = 'files' . DS . 'blog' . DS . $contentId . DS . 'blog_posts' . DS . 
-										$bkDir . DS . $saveEntity->id . DS . 
+									$bkFilePathThumb2 = 'files' . DS . 'blog' . DS . $contentId . DS . 'blog_posts' . DS .
+										$bkDir . DS . $saveEntity->id . DS .
 										preg_replace("/\.([^.]+)$/", "__thumb.$1",$entity->get($field));
 									$file = new \Cake\Filesystem\File(WWW_ROOT  . $orgFilePathThumb2);
 									$file->copy(WWW_ROOT . $bkFilePathThumb2, true, 0777);
@@ -171,7 +171,7 @@ class RevisionControlModelEventListener extends BcModelEventListener {
 								return 's:' . strlen($m[2]) . ':"' . $m[2] . '";';
 							}, $data->deta_object);
 							$dataObj = unserialize($deta_object);
-							$revBkPath = WWW_ROOT . 'files' . DS . 'blog' . DS . 
+							$revBkPath = WWW_ROOT . 'files' . DS . 'blog' . DS .
 								$dataObj->blog_content_id . DS . 'blog_posts' . DS .
 								$bkDir . DS . intval($data->id);
 							$dir = new \Cake\Filesystem\Folder();

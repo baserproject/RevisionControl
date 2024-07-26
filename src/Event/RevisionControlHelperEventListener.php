@@ -48,6 +48,8 @@ class RevisionControlHelperEventListener extends BcHelperEventListener {
 		//$attributes = $request->getAttributes();
 		$controller = $request->getParam('controller');
 		$action = $request->getParam('action');
+		// ユーザーモデルを取得しておく
+		$usersModel = TableRegistry::getTableLocator()->get('BaserCore.Users');
 		foreach(Configure::read('RevisionControl.views') as $modelName => $requestTarget) {
 			// views設定が現在の入力画面と一致した場合のみ動作
 			if ($requestTarget['controller'] == $controller && $requestTarget['action'] == $action) {
@@ -58,13 +60,13 @@ class RevisionControlHelperEventListener extends BcHelperEventListener {
 					$id = $controller == 'Pages' ? $request->getParam('pass')[0] : $request->getParam('pass')[1];
 				}
 				// RevisionControlsテーブルを呼び出して find
-				$revisionControlMdl = \Cake\ORM\TableRegistry::getTableLocator()->get('RevisionControl.RevisionControls');
+				$revisionControlMdl = TableRegistry::getTableLocator()->get('RevisionControl.RevisionControls');
 				$query = $revisionControlMdl->find('all',
 					['order' => 'revision desc']
 				)
 				// ユーザーテーブルをjoinする。
 				->join([
-					'table' => 'Users',
+					'table' => $usersModel->getTable(), // ユーザーモデルからテーブル名取得
 					'alias' => 'Users',
 					'type' => 'LEFT',
 					'conditions' => 'Users.id = RevisionControls.user_id',
