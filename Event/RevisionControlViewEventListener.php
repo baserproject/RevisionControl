@@ -50,10 +50,12 @@ class RevisionControlViewEventListener extends BcViewEventListener {
 									Configure::read('RevisionControl.actsAs.BcUpload.' . $overWriteModel)) {
 									$fileFields = Configure::read('RevisionControl.actsAs.BcUpload.' . $overWriteModel);
 									foreach($fileFields as $fileField) {
+										if (empty($dataObj[$modelName][$fileField])) {
+											continue;
+										}
 										$fieldData = $dataObj[$modelName][$fileField];
 										$revId = $data['RevisionControl']['id'];
-										if (empty($fieldData)) {
-										} else {
+										if (!empty($fieldData)) {
 											$path = "$bkDir/$revId/$fieldData";
 											$view->request->data[$overWriteModel][$fileField] = $path;
 										}
