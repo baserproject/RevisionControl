@@ -9,7 +9,7 @@ PluginフォルダにRevisionControlというフォルダ名にて設置し、�
 baserCMS3.0.12  
 baserCMS4.0.1  
 baserCMS4.0.2   
-baserCMS4.0.10.1
+baserCMS4.0.10.1 
 baserCMS4.8.1   
 baserCMS4.8.2   
 
