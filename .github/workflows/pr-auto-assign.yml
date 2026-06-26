@@ -2,7 +2,7 @@ name: PR auto-assign
 
 # プルリクの Reviewers / Assignees / ラベルを自動管理するワークフロー。
 # 仕様:
-#   - PR作成・再オープン: Reviewers=メンテナ固定 / Assignees=メンテナ固定
+#   - PR作成・再オープン: Reviewers=メンテナ固定＋Copilot / Assignees=メンテナ固定
 #   - Changes requested : 社内PR→Assignees=作成者 / 外部PR→ラベル「修正待ち」付与
 #   - 再レビュー依頼     : Assignees=メンテナに戻す / ラベル「修正待ち」解除
 #
@@ -65,6 +65,41 @@ jobs:
               } catch (e) { /* 未付与なら無視 */ }
             };
 
+            // Copilot をレビュアーに追加する（GraphQL 経由。REST の requestReviewers は Bot 非対応）
+            const requestCopilotReview = async () => {
+              try {
+                // リポジトリで Copilot レビュアーが利用可能か確認し、その Bot ノードIDを取得
+                const { repository } = await github.graphql(`
+                  query($owner: String!, $repo: String!) {
+                    repository(owner: $owner, name: $repo) {
+                      suggestedActors(capabilities: [CAN_BE_ASSIGNED], first: 100, loginNames: ["copilot-pull-request-reviewer"]) {
+                        nodes {
+                          login
+                          __typename
+                          ... on Bot { id }
+                        }
+                      }
+                    }
+                  }`,
+                  { owner, repo });
+                const copilot = repository.suggestedActors.nodes
+                  .find(n => n.login === 'copilot-pull-request-reviewer');
+                if (!copilot) {
+                  console.log('Copilot code review is not available on this repository.');
+                  return;
+                }
+                await github.graphql(`
+                  mutation($prId: ID!, $reviewerId: ID!) {
+                    requestReviews(input: { pullRequestId: $prId, userIds: [$reviewerId], union: true }) {
+                      clientMutationId
+                    }
+                  }`,
+                  { prId: pr.node_id, reviewerId: copilot.id });
+              } catch (e) {
+                console.log('Failed to request Copilot review: ' + e.message);
+              }
+            };
+
             // ① PR作成・再オープン
             if (event === 'pull_request_target' && (action === 'opened' || action === 'reopened')) {
               const reviewers = MAINTAINERS.filter(m => m !== author); // 作成者本人は除外
@@ -73,6 +108,7 @@ jobs:
                   { owner, repo, pull_number: number, reviewers });
               }
               await setAssignees(MAINTAINERS);
+              await requestCopilotReview();
               await removeLabel();
               return;
             }
