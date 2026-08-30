@@ -3,11 +3,9 @@ namespace RevisionControl\Event;
 
 use BaserCore\Event\BcHelperEventListener;
 use BaserCore\Utility\BcUtil;
-use BcBlog\View\Helper;
 use Cake\Event\Event;
 use Cake\ORM\TableRegistry;
 use Cake\Core\Configure;
-use Cake\Utility\Hash;
 
 /**
  * [RevisionControl]
@@ -34,13 +32,13 @@ class RevisionControlHelperEventListener extends BcHelperEventListener {
 	public function formAfterEnd(Event $event) {
 
 		if (!BcUtil::isAdminSystem()) {
-			return $event->getData('out');
+			return;
 		}
 
 		$view = $event->getSubject();
 
 		foreach(Configure::read('RevisionControl.excludeFormId') as $excludeId) {
-			if (isset($event->data['id']) && $event->data['id'] == $excludeId) {
+			if ($event->getData('id') !== null && $event->getData('id') == $excludeId) {
 				return;
 			}
 		}
@@ -61,9 +59,8 @@ class RevisionControlHelperEventListener extends BcHelperEventListener {
 				}
 				// RevisionControlsテーブルを呼び出して find
 				$revisionControlMdl = TableRegistry::getTableLocator()->get('RevisionControl.RevisionControls');
-				$query = $revisionControlMdl->find('all',
-					['order' => 'revision desc']
-				)
+				$query = $revisionControlMdl->find()
+				->orderBy(['RevisionControls.revision' => 'DESC'])
 				// ユーザーテーブルをjoinする。
 				->join([
 					'table' => $usersModel->getTable(), // ユーザーモデルからテーブル名取得

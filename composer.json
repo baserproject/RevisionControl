@@ -1,0 +1,44 @@
+{
+    "name": "baserproject/revision-control",
+    "description": "RevisionControl: edit-history management plugin for baserCMS 5",
+    "type": "cakephp-plugin",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~10.5.62",
+        "josegonzalez/dotenv": "^4.0",
+        "baserproject/baser-core": "5.3.*",
+        "baserproject/bc-blog": "5.3.*",
+        "robmorgan/phinx": "0.16.10",
+        "vierge-noire/cakephp-fixture-factories": "^3.0",
+        "vierge-noire/cakephp-test-suite-light": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "RevisionControl\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RevisionControl\\Test\\": "tests/",
+            "App\\": "tests/TestApp/src/",
+            "BaserCore\\Test\\": "vendor/baserproject/baser-core/tests/",
+            "BcBlog\\Test\\": "vendor/baserproject/bc-blog/tests/"
+        }
+    },
+    "scripts": {
+        "test": [
+            "Composer\\Config::disableProcessTimeout",
+            "vendor/bin/phpunit --colors=always"
+        ]
+    },
+    "config": {
+        "allow-plugins": {
+            "cakephp/plugin-installer": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

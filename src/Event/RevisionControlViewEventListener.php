@@ -2,10 +2,9 @@
 namespace RevisionControl\Event;
 
 use BaserCore\Event\BcViewEventListener;
-use Cake\View\Helper\HtmlHelper;
 use Cake\Event\Event;
 use Cake\Core\Configure;
-use Cake\View\View;
+use Cake\ORM\TableRegistry;
 /**
  * [RevisionControl]
  *
@@ -21,8 +20,8 @@ public $events = ['beforeRender'];
 	/**
 	 * beforeRender
 	 *
-	 * @param CakeEvent $event
-	 * @return boolean
+	 * @param Event $event
+	 * @return void
 	 */
 	public function beforeRender(Event $event)
 	{
@@ -42,7 +41,7 @@ public $events = ['beforeRender'];
 
 					 // リビジョン番号がある場合のみ
 					if($rev) {
-						$revisionControlMdl = \Cake\ORM\TableRegistry::getTableLocator()->get('RevisionControl.RevisionControls');
+						$revisionControlMdl = TableRegistry::getTableLocator()->get('RevisionControl.RevisionControls');
 						$viewData = $view->get($requestTarget['data']); // データを取得 $view->get('page') or $view->get('post')
 						if (!empty($viewData->id)) {
 							$id = $viewData->id;
@@ -92,7 +91,6 @@ public $events = ['beforeRender'];
 
 			}
 		}
-		return true;
 
 	}
 
