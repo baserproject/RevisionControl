@@ -26,6 +26,23 @@
                     <?php echo date("Y.m.d H:i:s", strtotime($data['RevisionControl']['created'])) ?>
                     (<?php echo $data['RevisionControl']['revision']; ?>)
                 </a>
+			<?php if (OnemindUtil::availableEditUser()): ?>
+					<?php $this->BcBaser->link('削除',
+						[
+							'admin' => true,
+							'plugin' => 'revision_control',
+							'controller' => 'revision_controls',
+							'action' => 'delete',
+							$data['RevisionControl']['id']
+						],
+						[
+							'class' => 'submit-token bca-btn',
+							'data-bca-btn-type' => 'delete',
+							'data-bca-btn-size' => 'sm'
+						],
+						'削除してもよろしいですか？'
+					)?>
+				<?php endif ?>
             </li>
         <?php endforeach; ?>
     </ul>
