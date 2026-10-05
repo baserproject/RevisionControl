@@ -9,12 +9,12 @@ use Cake\ORM\Entity;
  * RevisionControl Entity
  *
  * @property int $id
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  * @property string|null $model_name
  * @property int|null $model_id
  * @property int|null $revision
- * @property text|null $deta_object
+ * @property string|null $deta_object
  * @property int|null $user_id
  */
 class RevisionControl extends Entity
@@ -28,7 +28,7 @@ class RevisionControl extends Entity
      *
      * @var array<string, bool>
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         '*' => true,
         'id' => false
     ];

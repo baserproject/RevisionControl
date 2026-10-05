@@ -2,7 +2,6 @@
 namespace RevisionControl\Model\Table;
 
 use BaserCore\Model\Table\AppTable;
-use Cake\ORM\Association\hasOne;
 
 /**
  * [RevisionControl]
