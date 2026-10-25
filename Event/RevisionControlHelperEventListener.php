@@ -31,7 +31,7 @@ class RevisionControlHelperEventListener extends BcHelperEventListener {
 				));
 
 				if ($revList) {
-					echo $view->element('RevisionControl.admin/rivision_control_list', array('revList' => $revList));
+					echo $view->element('RevisionControl.admin/revision_control_list', array('revList' => $revList));
 				}
 			}
 		}
