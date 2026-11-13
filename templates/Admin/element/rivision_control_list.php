@@ -1,5 +1,4 @@
 <?php
-use Cake\ORM\Exception\PersistenceFailedException;
 use Cake\Routing\Router;
 /**
  * @var array $revList
@@ -22,7 +21,7 @@ $requestParams = $this->getRequest()->getAttribute('params');
                 $urlParams +=$requestParams['named'];
             }
             $urlParams['rev'] = $data->revision;
-            $url = \Cake\Routing\Router::url($urlParams);
+            $url = Router::url($urlParams);
             // baserCMS 5.0.x系のRouter::urlでは、末尾のrevがつかないため、追加する
             if (strpos($url, '/rev:') === false) {
                 $url .= '/rev:'. $data->revision;

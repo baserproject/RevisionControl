@@ -1,0 +1,73 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Test suite bootstrap for RevisionControl.
+ *
+ * This function is used to find the location of CakePHP whether CakePHP
+ * has been installed as a dependency of the plugin, or the plugin is itself
+ * installed as a dependency of an application.
+ */
+use BaserCore\Utility\BcApiUtil;
+use Migrations\TestSuite\Migrator;
+use Cake\Cache\Cache;
+use Cake\Core\Configure;
+use Cake\Core\Configure\Engine\PhpConfig;
+use Cake\Datasource\ConnectionManager;
+use Cake\Error\ErrorTrap;
+use Cake\Error\ExceptionTrap;
+use Cake\Log\Log;
+use Cake\Mailer\Mailer;
+use Cake\Mailer\TransportFactory;
+use Cake\Utility\Security;
+
+require __DIR__ . DS . 'TestApp' . DS . 'config' . DS . 'paths.php';
+require_once ROOT . '/vendor/autoload.php';
+require CORE_PATH . 'config' . DS . 'bootstrap.php';
+require CAKE . 'functions.php';
+
+if (!env('APP_NAME') && file_exists(CONFIG . '.env')) {
+    $dotenv = new \josegonzalez\Dotenv\Loader([CONFIG . '.env']);
+    $dotenv->parse()
+        ->putenv()
+        ->toEnv()
+        ->toServer();
+}
+
+Configure::config('default', new PhpConfig());
+Configure::load('app', 'default', false);
+Configure::load('app_local', 'default');
+
+date_default_timezone_set(Configure::read('App.defaultTimezone'));
+mb_internal_encoding(Configure::read('App.encoding'));
+ini_set('intl.default_locale', Configure::read('App.defaultLocale'));
+
+(new ErrorTrap(Configure::read('Error')))->register();
+(new ExceptionTrap(Configure::read('Error')))->register();
+
+Cache::setConfig(Configure::consume('Cache'));
+ConnectionManager::setConfig(Configure::consume('Datasources'));
+TransportFactory::setConfig(Configure::consume('EmailTransport'));
+Mailer::setConfig(Configure::consume('Email'));
+Log::setConfig(Configure::consume('Log'));
+Security::setSalt(Configure::consume('Security.salt'));
+
+ConnectionManager::drop('default');
+ConnectionManager::drop('test');
+Configure::load('install');
+ConnectionManager::setConfig(Configure::consume('Datasources'));
+
+if (!file_exists(CONFIG . 'jwt.pem')) {
+    BcApiUtil::createJwt();
+}
+
+(new Migrator())->runMany([
+    ['plugin' => 'BaserCore'],
+    ['plugin' => 'BcBlog'],
+    ['plugin' => 'RevisionControl'],
+]);
+
+Configure::write('BcApp.testAppPluginsToLoad', [
+    'BcBlog',
+    'RevisionControl',
+]);

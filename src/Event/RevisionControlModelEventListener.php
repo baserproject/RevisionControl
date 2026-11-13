@@ -3,12 +3,11 @@ namespace RevisionControl\Event;
 
 use BaserCore\Event\BcModelEventListener;
 use BaserCore\Utility\BcUtil;
+use BaserCore\Utility\BcFolder;
 use Cake\Event\Event;
 use Cake\Utility\Inflector;
 use Cake\ORM\TableRegistry;
-use Cake\Routing\Router;
 use Cake\Core\Configure;
-use Cake\Log\LogTrait;
 
 
 /**
@@ -22,7 +21,12 @@ class RevisionControlModelEventListener extends BcModelEventListener {
  * @var array
  */
 	public $events = array(
-		'afterSave',
+		// アイキャッチのファイル名は BcUploadBehavior::afterSave()（Behavior は
+		// EventManager::$defaultPriority = 10 で登録される）で確定するため、それより後に走らせる。
+		// 優先度を明示しないと BaserCorePlugin::loadPlugin() が plugins.priority（有効化順・
+		// 管理画面で並べ替え可能）を優先度として登録するため、10 未満になると Behavior より
+		// 先に走って null を記録してしまう。値は registerPluginEvent() の既定値に合わせる。
+		'afterSave' => ['priority' => 100],
 		'RevisionControl.beforeFind'
 	);
 
@@ -30,7 +34,7 @@ class RevisionControlModelEventListener extends BcModelEventListener {
  * afterSave
  *
  * @param Event $event
- * @return boolean
+ * @return void
  */
 	public function afterSave(Event $event) {
 
@@ -41,8 +45,6 @@ class RevisionControlModelEventListener extends BcModelEventListener {
 		$revision = null;
 		$limit = null;
 		$revisionControlSetting = Configure::read('RevisionControl'); // プラグイン設定読み込み
-		//var_dump($modelName);
-
 
 		if (array_key_exists($modelName, $revisionControlSetting['models']) && $modelId) {
 			// ページの場合 entity_id, ブログ記事なら blog_post_id
@@ -52,24 +54,19 @@ class RevisionControlModelEventListener extends BcModelEventListener {
 			$limit   = $revisionControlSetting['limit'];
 			$actsAs  = $revisionControlSetting['actsAs'];
 			$bkDir   = $revisionControlSetting['filesDir'];
-			$revisionControlMdl = \Cake\ORM\TableRegistry::getTableLocator()->get('RevisionControl.RevisionControls');
+			$revisionControlMdl = TableRegistry::getTableLocator()->get('RevisionControl.RevisionControls');
 
 			// 最新リビジョン番号を取得
-			$query = $revisionControlMdl->find('all', array(
-				'conditions' => array(
+			$query = $revisionControlMdl->find()
+				->where([
 					'model_name' => $modelName,
 					'model_id' => $modelId
-				),
-				'order' => 'revision desc',
-			));
-			// $query->enableHydration(false);
+				])
+				->orderBy(['revision' => 'DESC']);
 			$prevData = $query->first();
 			// BlogPostsはsaveが２回走るため、1秒以内のレコードは保存しない
 			if  (!empty($prevData) && strval($prevData->get('modified')) == strval($entity->get('modified'))) {
-				// \Cake\Log\Log::write('error', $entity->get('modified'));
-				// \Cake\Log\Log::write('error', $prevData->get('modified'));
-				// \Cake\Log\Log::write('error', strval($prevData->get('modified')) == strval($entity->get('modified')));
-				return true;
+				return;
 			}
 			if (isset($prevData->revision)) {
 				$revision = intval($prevData->revision) + 1;
@@ -116,30 +113,35 @@ class RevisionControlModelEventListener extends BcModelEventListener {
 							// 個別処理
 							if ($modelName == "BcBlog.BlogPosts") {
 								$contentId = $entity->blog_content_id;
-								$orgFilePath = 'files' . DS . 'blog' . DS . $contentId . DS . 'blog_posts' . DS .$entity->get($field);
-								$bkFilePath = 'files' . DS . 'blog' . DS . $contentId . DS . 'blog_posts' . DS . $bkDir . DS . $saveEntity->id . DS .$entity->get($field);
+								// 未設定時は null。文字列化して扱う（連結結果は同一・preg_replace への null 引き渡しを避ける）
+								$fieldValue = (string)$entity->get($field);
+								$orgFilePath = 'files' . DS . 'blog' . DS . $contentId . DS . 'blog_posts' . DS . $fieldValue;
+								$bkFilePath = 'files' . DS . 'blog' . DS . $contentId . DS . 'blog_posts' . DS . $bkDir . DS . $saveEntity->id . DS . $fieldValue;
 
-								$dir = new \Cake\Filesystem\Folder();
-								$dir->create(dirname(WWW_ROOT . $bkFilePath), 0777);
-								$file = new \Cake\Filesystem\File(WWW_ROOT  . $orgFilePath);
-								$file->copy(WWW_ROOT . $bkFilePath, true, 0777);
+								(new BcFolder(dirname(WWW_ROOT . $bkFilePath)))->create();
+								// is_file: アイキャッチ未設定だとパスがディレクトリに解決される（旧 File::exists() 同等）
+								if (is_file(WWW_ROOT . $orgFilePath)) {
+									copy(WWW_ROOT . $orgFilePath, WWW_ROOT . $bkFilePath);
+								}
 
 								// thumbファイル ( __mobile_thumb /  __thumb )
 								$orgFilePathThumb1 = preg_replace("/\.([^.]+)$/", "__mobile_thumb.$1", $orgFilePath);
 								if (file_exists($orgFilePathThumb1)) {
 									$bkFilePathThumb1 = 'files' . DS . 'blog' . DS . $contentId . DS . 'blog_posts' . DS .
 										$bkDir . DS . $saveEntity->id . DS .
-										preg_replace("/\.([^.]+)$/", "__mobile_thumb.$1",$entity->get($field));
-									$file = new \Cake\Filesystem\File(WWW_ROOT  . $orgFilePathThumb1);
-									$file->copy(WWW_ROOT . $bkFilePathThumb1, true, 0777);
+										preg_replace("/\.([^.]+)$/", "__mobile_thumb.$1", $fieldValue);
+									if (is_file(WWW_ROOT . $orgFilePathThumb1)) {
+										copy(WWW_ROOT . $orgFilePathThumb1, WWW_ROOT . $bkFilePathThumb1);
+									}
 								}
 								$orgFilePathThumb2 = preg_replace("/\.([^.]+)$/", "__thumb.$1", $orgFilePath);
 								if (file_exists($orgFilePathThumb2)) {
 									$bkFilePathThumb2 = 'files' . DS . 'blog' . DS . $contentId . DS . 'blog_posts' . DS .
 										$bkDir . DS . $saveEntity->id . DS .
-										preg_replace("/\.([^.]+)$/", "__thumb.$1",$entity->get($field));
-									$file = new \Cake\Filesystem\File(WWW_ROOT  . $orgFilePathThumb2);
-									$file->copy(WWW_ROOT . $bkFilePathThumb2, true, 0777);
+										preg_replace("/\.([^.]+)$/", "__thumb.$1", $fieldValue);
+									if (is_file(WWW_ROOT . $orgFilePathThumb2)) {
+										copy(WWW_ROOT . $orgFilePathThumb2, WWW_ROOT . $bkFilePathThumb2);
+									}
 								}
 							}
 
@@ -151,13 +153,12 @@ class RevisionControlModelEventListener extends BcModelEventListener {
 
 			// リビジョン制限オーバーデータの削除
 			if ($limit) {
-				$revisionListQuery = $revisionControlMdl->find('all', array(
-					'conditions' => array(
+				$revisionListQuery = $revisionControlMdl->find()
+					->where([
 						'model_name' => $modelName,
 						'model_id' => $modelId
-					),
-					'order' => 'revision desc',
-				));
+					])
+					->orderBy(['revision' => 'DESC']);
 				$revisionList = $revisionListQuery->all()->toList();
 				$i = 0;
 				foreach($revisionList as $data) {
@@ -174,14 +175,12 @@ class RevisionControlModelEventListener extends BcModelEventListener {
 							$revBkPath = WWW_ROOT . 'files' . DS . 'blog' . DS .
 								$dataObj->blog_content_id . DS . 'blog_posts' . DS .
 								$bkDir . DS . intval($data->id);
-							$dir = new \Cake\Filesystem\Folder();
-							$dir->delete($revBkPath);
+							(new BcFolder($revBkPath))->delete();
 						}
 					}
 				}
 			}
 		}
-		return true;
 
 	}
 	    /**
